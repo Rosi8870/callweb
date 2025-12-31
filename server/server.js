@@ -7,7 +7,7 @@ const crypto = require("crypto");
 const app = express();
 const server = http.createServer(app);
 
-/* ---------------- SOCKET.IO ---------------- */
+/* ================= SOCKET.IO ================= */
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -15,7 +15,7 @@ const io = new Server(server, {
   }
 });
 
-/* ---------------- PEERJS (CORRECT) ---------------- */
+/* ================= PEERJS (CRITICAL) ================= */
 const peerServer = ExpressPeerServer(server, {
   path: "/peerjs",
   allow_discovery: true
@@ -23,7 +23,7 @@ const peerServer = ExpressPeerServer(server, {
 
 app.use("/peerjs", peerServer);
 
-/* ---------------- PERMANENT ID MAPS ---------------- */
+/* ================= PERMANENT ID MAPS ================= */
 const ipToPermanentId = {};
 const permanentToPeerId = {};
 const socketToPermanent = {};
@@ -36,7 +36,6 @@ function generatePermanentId(ip) {
     .slice(0, 10);
 }
 
-/* ---------------- SOCKET HANDLING ---------------- */
 io.on("connection", socket => {
   const ip =
     socket.handshake.headers["x-forwarded-for"]?.split(",")[0] ||
@@ -67,7 +66,7 @@ io.on("connection", socket => {
   });
 });
 
-/* ---------------- START ---------------- */
+/* ================= START ================= */
 server.listen(process.env.PORT || 3000, () => {
   console.log("Backend running on Render");
 });
