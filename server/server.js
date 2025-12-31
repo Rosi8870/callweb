@@ -7,41 +7,30 @@ const cors = require("cors");
 
 const app = express();
 
-/* 🔥 CORS MUST BE HERE (BEFORE PEERJS) */
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST"]
-}));
+/* CORS FIRST */
+app.use(cors({ origin: "*" }));
 
 const server = http.createServer(app);
 
-/* ---------------- SOCKET.IO ---------------- */
+/* SOCKET.IO */
 const io = new Server(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
+  cors: { origin: "*" }
 });
 
-/* ---------------- PEERJS (RENDER SAFE) ---------------- */
+/* PEERJS — THIS CREATES /peerjs/id */
 const peerServer = ExpressPeerServer(server, {
   path: "/peerjs"
 });
 
-/* 🔥 THIS LINE IS WHAT MAKES /peerjs/id EXIST */
 app.use("/peerjs", peerServer);
 
-/* ---------------- PERMANENT ID LOGIC ---------------- */
+/* PERMANENT ID MAPS */
 const ipToPermanentId = {};
 const permanentToPeerId = {};
 const socketToPermanent = {};
 
 function generatePermanentId(ip) {
-  return crypto
-    .createHash("sha256")
-    .update(ip)
-    .digest("hex")
-    .slice(0, 10);
+  return crypto.createHash("sha256").update(ip).digest("hex").slice(0, 10);
 }
 
 io.on("connection", socket => {
@@ -74,7 +63,6 @@ io.on("connection", socket => {
   });
 });
 
-/* ---------------- START ---------------- */
 server.listen(process.env.PORT || 3000, () => {
-  console.log("Backend running on Render");
+  console.log("Backend running");
 });

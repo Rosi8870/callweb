@@ -21,11 +21,6 @@ const peer = new Peer(undefined, {
   path: "/"
 });
 
-
-
-
-
-
 /* ================= STATE ================= */
 let myPeerId = "";
 let permanentId = "";
