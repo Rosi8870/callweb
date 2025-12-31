@@ -17,9 +17,10 @@ navigator.mediaDevices.getUserMedia({ audio: true })
 const peer = new Peer(undefined, {
   host: "callweb-backend.onrender.com",
   port: 443,
-  path: "/peerjs",
-  secure: true
+  secure: true,
+  path: "/"
 });
+
 
 
 /* ================= STATE ================= */
