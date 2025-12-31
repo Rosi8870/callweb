@@ -1,18 +1,21 @@
 /* ================= SOCKET ================= */
-const socket = io("https://your-backend.onrender.com", {
-  transports: ["websocket"],
+const socket = io("https://callweb-backend.onrender.com", {
+  transports: ["websocket"]
 });
 
-
-/* ================= MIC (ONCE) ================= */
+/* ================= MIC (ONCE ONLY) ================= */
 let localStream;
 navigator.mediaDevices.getUserMedia({ audio: true })
-  .then(stream => localStream = stream)
-  .catch(() => alert("Microphone permission required"));
+  .then(stream => {
+    localStream = stream;
+  })
+  .catch(() => {
+    alert("Microphone permission is required");
+  });
 
-/* ================= PEER ================= */
+/* ================= PEER (PRODUCTION) ================= */
 const peer = new Peer(undefined, {
-  host: "your-backend.onrender.com",
+  host: "callweb-backend.onrender.com",
   port: 443,
   path: "/peer",
   secure: true
@@ -36,6 +39,11 @@ const endBtn = document.getElementById("endBtn");
 const copyPermanentBtn = document.getElementById("copyPermanentBtn");
 const callTimer = document.getElementById("callTimer");
 
+const incoming = document.getElementById("incoming");
+const callerPermanentId = document.getElementById("callerPermanentId");
+const answerBtn = document.getElementById("answerBtn");
+const rejectBtn = document.getElementById("rejectBtn");
+
 /* ================= TOAST ================= */
 function toast(msg) {
   toastEl.innerText = msg;
@@ -45,7 +53,7 @@ function toast(msg) {
 
 /* ================= TIMER ================= */
 function startTimer() {
-  stopTimer(); // safety
+  stopTimer();
   seconds = 0;
   callTimer.innerText = "00:00";
   callTimer.classList.remove("hidden");
@@ -66,27 +74,7 @@ function stopTimer() {
   callTimer.classList.add("hidden");
 }
 
-/* ================= PERMANENT ID ================= */
-socket.on("PERMANENT_ID", id => {
-  permanentId = id;
-  permanentIdEl.innerText = id;
-});
-
-/* ================= PEER READY ================= */
-peer.on("open", id => {
-  myPeerId = id;
-  myPeerIdEl.innerText = id;
-  statusEl.innerText = "Ready";
-  socket.emit("REGISTER_PEER", id);
-});
-
-/* ================= COPY PERMANENT ID ================= */
-copyPermanentBtn.onclick = async () => {
-  await navigator.clipboard.writeText(permanentId);
-  toast("Permanent ID copied");
-};
-
-/* ================= UI HELPERS ================= */
+/* ================= UI STATES ================= */
 function setIdleUI() {
   callBtn.hidden = false;
   copyPermanentBtn.hidden = false;
@@ -102,7 +90,28 @@ function setConnectedUI() {
   statusEl.innerText = "Connected";
 }
 
-/* ================= CALL ================= */
+/* ================= PERMANENT ID FROM SERVER ================= */
+socket.on("PERMANENT_ID", id => {
+  permanentId = id;
+  permanentIdEl.innerText = id;
+});
+
+/* ================= PEER READY ================= */
+peer.on("open", id => {
+  myPeerId = id;
+  myPeerIdEl.innerText = id;
+  statusEl.innerText = "Ready";
+
+  socket.emit("REGISTER_PEER", id);
+});
+
+/* ================= COPY PERMANENT ID ================= */
+copyPermanentBtn.onclick = async () => {
+  await navigator.clipboard.writeText(permanentId);
+  toast("Permanent ID copied");
+};
+
+/* ================= OUTGOING CALL ================= */
 callBtn.onclick = () => {
   const targetPermanentId = callId.value.trim();
   if (!targetPermanentId) return;
@@ -123,7 +132,7 @@ callBtn.onclick = () => {
     currentCall.on("stream", stream => {
       remoteAudio.srcObject = stream;
 
-      // ✅ CALL ACTUALLY CONNECTED HERE
+      // ✅ CALL CONNECTED
       setConnectedUI();
       startTimer();
     });
@@ -157,7 +166,7 @@ peer.on("call", call => {
     call.on("stream", stream => {
       remoteAudio.srcObject = stream;
 
-      // ✅ START TIMER ONLY AFTER ANSWER
+      // ✅ TIMER STARTS ONLY AFTER ANSWER
       setConnectedUI();
       startTimer();
     });

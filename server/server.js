@@ -7,7 +7,7 @@ const crypto = require("crypto");
 const app = express();
 const server = http.createServer(app);
 
-/* Socket.IO */
+/* ================= SOCKET.IO ================= */
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -15,21 +15,27 @@ const io = new Server(server, {
   }
 });
 
-/* PeerJS */
+/* ================= PEERJS SERVER ================= */
 const peerServer = ExpressPeerServer(server, {
   path: "/peer"
 });
 app.use("/peer", peerServer);
 
-/* Permanent ID logic */
+/* ================= PERMANENT ID MAPS ================= */
 const ipToPermanentId = {};
 const permanentToPeerId = {};
 const socketToPermanent = {};
 
+/* ================= HELPERS ================= */
 function generatePermanentId(ip) {
-  return crypto.createHash("sha256").update(ip).digest("hex").slice(0, 10);
+  return crypto
+    .createHash("sha256")
+    .update(ip)
+    .digest("hex")
+    .slice(0, 10);
 }
 
+/* ================= CONNECTION ================= */
 io.on("connection", socket => {
   const ip =
     socket.handshake.headers["x-forwarded-for"]?.split(",")[0] ||
@@ -37,6 +43,7 @@ io.on("connection", socket => {
 
   if (!ipToPermanentId[ip]) {
     ipToPermanentId[ip] = generatePermanentId(ip);
+    console.log("Generated permanent ID:", ipToPermanentId[ip]);
   }
 
   const permanentId = ipToPermanentId[ip];
@@ -45,6 +52,8 @@ io.on("connection", socket => {
   socket.on("REGISTER_PEER", peerId => {
     permanentToPeerId[permanentId] = peerId;
     socketToPermanent[socket.id] = permanentId;
+
+    console.log(`Mapped ${permanentId} → ${peerId}`);
   });
 
   socket.on("RESOLVE_PERMANENT_ID", (targetPermanentId, cb) => {
@@ -56,10 +65,12 @@ io.on("connection", socket => {
     if (pid) {
       delete permanentToPeerId[pid];
       delete socketToPermanent[socket.id];
+      console.log(`Disconnected ${pid}`);
     }
   });
 });
 
+/* ================= START ================= */
 server.listen(process.env.PORT || 3000, () => {
-  console.log("Backend running");
+  console.log("Backend running on Render");
 });
