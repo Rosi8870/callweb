@@ -3,11 +3,19 @@ const http = require("http");
 const { Server } = require("socket.io");
 const { ExpressPeerServer } = require("peer");
 const crypto = require("crypto");
+const cors = require("cors");
 
 const app = express();
+
+/* 🔥 CORS MUST BE HERE (BEFORE PEERJS) */
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST"]
+}));
+
 const server = http.createServer(app);
 
-/* ================= SOCKET.IO ================= */
+/* ---------------- SOCKET.IO ---------------- */
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -15,15 +23,15 @@ const io = new Server(server, {
   }
 });
 
-/* ================= PEERJS (CRITICAL) ================= */
+/* ---------------- PEERJS (RENDER SAFE) ---------------- */
 const peerServer = ExpressPeerServer(server, {
-  path: "/peerjs",
-  allow_discovery: true
+  path: "/peerjs"
 });
 
+/* 🔥 THIS LINE IS WHAT MAKES /peerjs/id EXIST */
 app.use("/peerjs", peerServer);
 
-/* ================= PERMANENT ID MAPS ================= */
+/* ---------------- PERMANENT ID LOGIC ---------------- */
 const ipToPermanentId = {};
 const permanentToPeerId = {};
 const socketToPermanent = {};
@@ -66,7 +74,7 @@ io.on("connection", socket => {
   });
 });
 
-/* ================= START ================= */
+/* ---------------- START ---------------- */
 server.listen(process.env.PORT || 3000, () => {
   console.log("Backend running on Render");
 });
