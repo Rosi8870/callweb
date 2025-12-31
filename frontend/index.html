@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Audio Call</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f2027" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- PeerJS -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+  <!-- Socket.IO -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <h2>Audio Call</h2>
+    <span id="status">Connecting…</span>
+  </header>
+
+  <!-- PERMANENT ID -->
+  <section class="card">
+    <label>Your Permanent ID</label>
+    <div class="row">
+      <div id="permanentId" class="mono">Loading…</div>
+      <button id="copyPermanentBtn" class="icon-btn" title="Copy ID">
+        <i data-lucide="copy"></i>
+      </button>
+    </div>
+  </section>
+
+  <!-- CURRENT PEER ID -->
+  <section class="card">
+    <label>Current Peer ID</label>
+    <div id="myPeerId" class="mono">---</div>
+  </section>
+
+  <!-- CALL -->
+  <section class="card">
+    <label>Call using Permanent ID</label>
+    <input id="callId" placeholder="Enter permanent ID" />
+
+    <div class="actions">
+      <!-- CALL -->
+      <button id="callBtn" class="call-btn" title="Call">
+        <i data-lucide="phone-call"></i>
+      </button>
+
+      <!-- END / DECLINE -->
+      <button id="endBtn" class="end-btn" hidden title="End Call">
+        <i data-lucide="phone-off"></i>
+      </button>
+    </div>
+  </section>
+
+  <!-- INSTALL APP -->
+  <section class="card install-card">
+    <button id="installBtn" class="install-btn" hidden>
+      <i data-lucide="download"></i>
+      Install Mobile App
+    </button>
+  </section>
+
+</div>
+
+<!-- INCOMING CALL (FULL SCREEN) -->
+<div id="incoming" class="incoming hidden">
+  <h3>Incoming Call</h3>
+  <p id="callerPermanentId">Unknown</p>
+
+  <div class="incoming-actions">
+    <button id="answerBtn" class="call-btn">
+      <i data-lucide="phone"></i>
+      Answer
+    </button>
+
+    <button id="rejectBtn" class="end-btn">
+      <i data-lucide="phone-off"></i>
+      Decline
+    </button>
+  </div>
+</div>
+
+<!-- CALL TIMER -->
+<div id="callTimer" class="call-timer hidden">00:00</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- AUDIO -->
+<audio id="remoteAudio" autoplay></audio>
+
+<!-- LOGIC -->
+<script src="js/ui.js"></script>
+
+<!-- ICON INIT -->
+<script>
+  lucide.createIcons();
+</script>
+
+<!-- PWA INSTALL LOGIC -->
+<script>
+  let deferredPrompt;
+  const installBtn = document.getElementById("installBtn");
+
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.hidden = false;
+  });
+
+  installBtn.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.hidden = true;
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "audio-call-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "peer": "node peer-server.js"
+  },
+  "dependencies": {
+    "peer": "^0.6.1",
+    "socket.io": "^4.7.5"
+  }
+}
