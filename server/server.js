@@ -17,9 +17,12 @@ const io = new Server(server, {
 
 /* ================= PEERJS SERVER ================= */
 const peerServer = ExpressPeerServer(server, {
-  path: "/peer"
+  path: "/peerjs",
+  allow_discovery: true
 });
-app.use("/peer", peerServer);
+
+app.use("/peerjs", peerServer);
+
 
 /* ================= PERMANENT ID MAPS ================= */
 const ipToPermanentId = {};
