@@ -3,8 +3,16 @@ const http = require("http");
 const { Server } = require("socket.io");
 const { ExpressPeerServer } = require("peer");
 const crypto = require("crypto");
+const cors = require("cors");
 
 const app = express();
+
+/* ✅ CORS MIDDLEWARE (VERY IMPORTANT) */
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST"]
+}));
+
 const server = http.createServer(app);
 
 /* ================= SOCKET.IO ================= */
@@ -15,21 +23,20 @@ const io = new Server(server, {
   }
 });
 
-/* ================= PEERJS SERVER ================= */
-const peerServer = ExpressPeerServer(server, {
+/* ================= PEERJS (FIXED) ================= */
+const peerServer = ExpressPeerServer(app, {
   path: "/peerjs",
   allow_discovery: true
 });
 
+/* 🔥 THIS IS THE KEY FIX */
 app.use("/peerjs", peerServer);
 
-
-/* ================= PERMANENT ID MAPS ================= */
+/* ================= PERMANENT ID LOGIC ================= */
 const ipToPermanentId = {};
 const permanentToPeerId = {};
 const socketToPermanent = {};
 
-/* ================= HELPERS ================= */
 function generatePermanentId(ip) {
   return crypto
     .createHash("sha256")
@@ -38,7 +45,6 @@ function generatePermanentId(ip) {
     .slice(0, 10);
 }
 
-/* ================= CONNECTION ================= */
 io.on("connection", socket => {
   const ip =
     socket.handshake.headers["x-forwarded-for"]?.split(",")[0] ||
@@ -46,7 +52,6 @@ io.on("connection", socket => {
 
   if (!ipToPermanentId[ip]) {
     ipToPermanentId[ip] = generatePermanentId(ip);
-    console.log("Generated permanent ID:", ipToPermanentId[ip]);
   }
 
   const permanentId = ipToPermanentId[ip];
@@ -55,8 +60,6 @@ io.on("connection", socket => {
   socket.on("REGISTER_PEER", peerId => {
     permanentToPeerId[permanentId] = peerId;
     socketToPermanent[socket.id] = permanentId;
-
-    console.log(`Mapped ${permanentId} → ${peerId}`);
   });
 
   socket.on("RESOLVE_PERMANENT_ID", (targetPermanentId, cb) => {
@@ -68,7 +71,6 @@ io.on("connection", socket => {
     if (pid) {
       delete permanentToPeerId[pid];
       delete socketToPermanent[socket.id];
-      console.log(`Disconnected ${pid}`);
     }
   });
 });
